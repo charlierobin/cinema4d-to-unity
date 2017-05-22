@@ -1,0 +1,32 @@
+STRINGTABLE ExportToUnity
+{
+	  ExportToUnity                   						              		"Export to Unity Helper";
+    EXPORTTOUNITY_PATH              						              		"Path";
+    EXPORTTOUNITY_FILENAME_OVERRIDE 						              		"Filename override";
+    EXPORTTOUNITY_FILEFORMAT        							              	"File format";
+    EXPORTTOUNITY_FILEFORMAT_FBX    							              	"FBX (.fbx)";
+    EXPORTTOUNITY_FILEFORMAT_C4D    							              	"Cinema4D (.c4d)";
+    EXPORTTOUNITY_GRP_COMMAND_OPTIONS							              	"Do these commands for this object...";
+    EXPORTTOUNITY_DO_CURRENT_STATE_TO_OBJECT			          			"Current State to Object";
+    EXPORTTOUNITY_DO_CONNECT_AND_DELETE					            			"Connect and Delete";
+    EXPORTTOUNITY_GRP_FBX_OPTIONS								                	"FBX Options (R16 onwards)";
+    EXPORTTOUNITY_OVERRIDE_FBX_PREFS							              	"Override FBX Export preferences for this file";
+    EXPORTTOUNITY_COPY_FBX_PREFS_BUTTON							            	"Copy from current FBX export preferences";
+    EXPORTTOUNITY_FBXEXPORT_ASCII_OVERRIDE					          		"As Text File";
+	  EXPORTTOUNITY_FBXEXPORT_LIGHTS_OVERRIDE					          		"Lights";
+	  EXPORTTOUNITY_FBXEXPORT_CAMERAS_OVERRIDE				          		"Cameras";
+	  EXPORTTOUNITY_FBXEXPORT_SPLINES_OVERRIDE				          		"Splines";
+  	EXPORTTOUNITY_FBXEXPORT_SDS_OVERRIDE						            	"Subdivision Surface (R18 onwards)";
+  	EXPORTTOUNITY_FBXEXPORT_TRACKS_OVERRIDE						          	"Tracks";
+  	EXPORTTOUNITY_FBXEXPORT_BAKE_ALL_FRAMES_OVERRIDE				      "Bake All Frames";
+  	EXPORTTOUNITY_FBXEXPORT_PLA_TO_VERTEXCACHE_OVERRIDE				    "PLA to Vertex Cache";
+  	EXPORTTOUNITY_FBXEXPORT_SAVE_NORMALS_OVERRIDE				        	"Normals";
+  	EXPORTTOUNITY_FBXEXPORT_SAVE_VERTEX_MAPS_AS_COLORS_OVERRIDE		"Vertex Maps to Vertex Colors";
+  	EXPORTTOUNITY_FBXEXPORT_SAVE_VERTEX_COLORS_OVERRIDE		     		"Vertex Colors (R18 onwards)";
+  	EXPORTTOUNITY_FBXEXPORT_TRIANGULATE_OVERRIDE				        	"Triangulate Geometry";
+	  EXPORTTOUNITY_FBXEXPORT_SDS_SUBDIVISION_OVERRIDE			      	"SDS Subdivision";
+  	EXPORTTOUNITY_FBXEXPORT_TEXTURES_OVERRIDE					          	"Textures and Materials";
+  	EXPORTTOUNITY_FBXEXPORT_EMBED_TEXTURES_OVERRIDE			      		"Embed Textures";
+  	EXPORTTOUNITY_FBXEXPORT_SUBSTANCES_OVERRIDE				        		"Substances (R18 onwards)";
+  	EXPORTTOUNITY_FBXEXPORT_TEXT_LABEL							             	"For release 15 and earlier, all FBX exports use your FBX Export preferences";
+}
