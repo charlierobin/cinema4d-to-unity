@@ -1,0 +1,4 @@
+STRINGTABLE StopTag
+{
+	StopTag    "Stop Tag";
+}

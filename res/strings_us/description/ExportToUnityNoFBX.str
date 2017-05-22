@@ -1,0 +1,12 @@
+STRINGTABLE ExportToUnityNoFBX
+{
+	ExportToUnityNoFBX                 								"Export to Unity Helper";
+    EXPORTTOUNITY_PATH              								"Path";
+    EXPORTTOUNITY_FILENAME_OVERRIDE 								"Filename override";
+    EXPORTTOUNITY_FILEFORMAT        								"File format";
+    EXPORTTOUNITY_FILEFORMAT_FBX    								"FBX (.fbx)";
+    EXPORTTOUNITY_FILEFORMAT_C4D    								"Cinema4D (.c4d)";
+    EXPORTTOUNITY_GRP_COMMAND_OPTIONS								"Do these commands for this object...";
+    EXPORTTOUNITY_DO_CURRENT_STATE_TO_OBJECT						"Current State to Object";
+    EXPORTTOUNITY_DO_CONNECT_AND_DELETE								"Connect and Delete";
+}
