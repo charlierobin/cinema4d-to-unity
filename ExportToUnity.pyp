@@ -9,7 +9,7 @@ if folder not in sys.path: sys.path.insert( 0, folder )
 
 import k
 
-print "Export To Unity v1.0 Beta"
+print( "Export To Unity v1.0 Beta" )
 
 class ExportToUnity( plugins.CommandData ):
     
@@ -34,8 +34,8 @@ class ExportToUnity( plugins.CommandData ):
     
             if len( enabledUnityTags ) > 0 and len( enabledStopTags ) > 0: 
                 
-                print "There is a stop tag on an object with an export tag (" + object.GetName() + "). The stop tag will be ignored."
-                print k.PRINTED_NEWLINE            
+                print( "There is a stop tag on an object with an export tag (" + object.GetName() + "). The stop tag will be ignored." )
+                print( k.PRINTED_NEWLINE )
     
             for tag in enabledUnityTags: 
     
@@ -107,11 +107,11 @@ class ExportToUnity( plugins.CommandData ):
                 
                 if data[ c4d.EXPORTTOUNITY_ERRORS ]:
                     
-                    print object.GetName() + " (tag: " + tag.GetName() + ")"
+                    print( object.GetName() + " (tag: " + tag.GetName() + ")" )
                     
-                    print data[ c4d.EXPORTTOUNITY_ERRORS ]
+                    print( data[ c4d.EXPORTTOUNITY_ERRORS ] )
                 
-                    print k.PRINTED_NEWLINE
+                    print( k.PRINTED_NEWLINE )
                 
             object = self.GetNextObject( object )    
     
@@ -134,7 +134,7 @@ class ExportToUnity( plugins.CommandData ):
         
         if fbxExportSettings is not None:
             
-            for key, value in self.UsersFBXSettings.iteritems(): fbxExportSettings[ key ] = value
+            for key, value in self.UsersFBXSettings.items(): fbxExportSettings[ key ] = value
             
     def GetNextObject( self, object ):
 
@@ -264,12 +264,12 @@ class ExportToUnity( plugins.CommandData ):
         
         objectName = object.GetName()
         
-        print objectName + " (tag: " + tag.GetName() + ")  ➡  " + tag[ c4d.EXPORTTOUNITY_FINAL_PATH ]
+        print( objectName + " (tag: " + tag.GetName() + ")  ➡  " + tag[ c4d.EXPORTTOUNITY_FINAL_PATH ] )
         
         if tag [ c4d.EXPORTTOUNITY_WARNINGS ]:
             
-            print tag[ c4d.EXPORTTOUNITY_WARNINGS ]
-            print k.PRINTED_NEWLINE
+            print( tag[ c4d.EXPORTTOUNITY_WARNINGS ] )
+            print( k.PRINTED_NEWLINE )
         
         theNewDocument = c4d.documents.IsolateObjects( doc, [ object ] )
         theNewDocument.SetDocumentName( "temp-export-to-unity-" + str( self.TempDocumentNameCounter ) )
@@ -344,7 +344,7 @@ class ExportToUnity( plugins.CommandData ):
 
         if thereWereErrors:
             self.PrintErrors( doc )
-            print "There were errors. Nothing was exported."
+            print( "There were errors. Nothing was exported." )
             return True
         
         self.StoreUsersFBXSettings()
@@ -477,7 +477,7 @@ class Tag( plugins.TagData ):
 
                 else:
                     
-                    print "Could not get the user’s FBX export settings."
+                    print( "Could not get the user’s FBX export settings." )
             
         return True
 
