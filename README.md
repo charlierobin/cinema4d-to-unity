@@ -17,7 +17,7 @@ Documentation on the Cinema 4D Python SDK is here ...
 
 https://developers.maxon.net/docs/Cinema4DPythonSDK/html/index.html
 
-Charlie Robin 2011-2017
+Charlie Robin 2011-2021
 
 http://charlierobin.com/cinema4d-to-unity
 
