@@ -17,5 +17,5 @@ Documentation on the Cinema 4D Python SDK is here ...
 
 https://developers.maxon.net/docs/Cinema4DPythonSDK/html/index.html
 
-Charlie 2011-2021
+Charlie 2011-2022
 
