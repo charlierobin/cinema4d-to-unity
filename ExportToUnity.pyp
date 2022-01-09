@@ -1,4 +1,5 @@
 import c4d, os, sys
+
 from c4d import plugins, utils, documents, gui, bitmaps, threading
 
 #path = c4d.storage.GeGetC4DPath( c4d.C4D_PATH_PREFS ) + "/symbolcache"
@@ -7,9 +8,80 @@ from c4d import plugins, utils, documents, gui, bitmaps, threading
 folder = os.path.dirname( __file__ )
 if folder not in sys.path: sys.path.insert( 0, folder )
 
-import k
+# constants
 
-print( "Export To Unity v1.0 Beta" )
+MAIN_COMMAND_PLUGIN_ID = 1034321
+MAIN_COMMAND_NAME = "Do the export to Unity"
+MAIN_COMMAND_HELP = "A plug in that helps with getting stuff out of Cinema 4D and into Unity"
+
+MAIN_MENU_TITLE = "Unity"
+MAIN_PLUGIN_COMMAND = "PLUGIN_CMD_" + str( MAIN_COMMAND_PLUGIN_ID )
+
+MAIN_TAG_PLUGIN_ID = 1034322
+MAIN_TAG_TAGNAME = "Export to Unity"
+MAIN_TAG_DESCRIPTION = "ExportToUnity"
+MAIN_TAG_DESCRIPTION_NO_FBX = "ExportToUnityNoFBX"
+
+STOP_TAG_PLUGIN_ID = 1039243
+STOP_TAG_TAGNAME = "Exclude object and children"
+STOP_TAG_DESCRIPTION = "StopTag"
+
+TOGGLE_CLEAR_CONSOLE_COMMAND_PLUGIN_ID = 1039238
+TOGGLE_CLEAR_CONSOLE_COMMAND = "PLUGIN_CMD_" + str( TOGGLE_CLEAR_CONSOLE_COMMAND_PLUGIN_ID )
+TOGGLE_CLEAR_CONSOLE_COMMAND_NAME = "Clear console each time"
+TOGGLE_CLEAR_CONSOLE_COMMAND_HELP = "Clears console before starting Unity export"
+
+TOGGLE_DO_SAVE_COMMAND_PLUGIN_ID = 1039239
+TOGGLE_DO_SAVE_COMMAND = "PLUGIN_CMD_" + str( TOGGLE_DO_SAVE_COMMAND_PLUGIN_ID )
+TOGGLE_DO_SAVE_COMMAND_NAME = "Do Cinema 4D “Save” command"
+TOGGLE_DO_SAVE_COMMAND_HELP = "Does a standard Cinema 4D save command before doing the Unity export"
+
+# various options/flags used with c4d.documents.SaveDocument in "Export" method
+
+SAVE_DOCUMENT_FLAGS = c4d.SAVEDOCUMENTFLAGS_DONTADDTORECENTLIST
+
+C4D_OPTION_SAVE_AS_C4D = c4d.FORMAT_C4DEXPORT
+C4D_OPTION_SAVE_AS_FBX = 1026370
+
+FBX_EXPORTER_ID = 1026370
+
+# command codes ( for use with c4d.CallCommand )
+
+COMMAND_CURRENT_STATE_TO_OBJECT = 12233
+COMMAND_SELECT_CHILDREN = 16388
+COMMAND_CONNECT_AND_DELETE = 16768
+COMMAND_DELETE = 12109
+COMMAND_CLEAR_CONSOLE = 13957
+COMMAND_SAVE = 12098
+COMMAND_SHOW_CONSOLE = 12305
+
+# preferences ( c4d.plugins.GetWorldPluginData etc )
+
+PREF_DO_C4D_SAVE_COMMAND = 1
+PREF_DO_CLEAR_CONSOLE = 2
+PREF_LAST_PATH = 3
+
+# file type extensions
+
+FILEEXTENSION_FBX = "fbx"
+FILEEXTENSION_C4D = "c4d"
+
+# defaults (for new tags applied to objects for the first time)
+
+TAG_DEFAULT_FILEFORMAT = 10001   #c4d.EXPORTTOUNITY_FILEFORMAT_FBX
+#TAG_DEFAULT_FILEFORMAT = c4d.EXPORTTOUNITY_FILEFORMAT_FBX
+
+# miscellaneous
+
+NEWLINE = "\n"
+PRINTED_NEWLINE = " " + NEWLINE
+
+MINIMUM_C4D_VERSION_REQUIRED_FOR_FBX_OVERRIDE = 16000
+NAME_OF_EDITOR_MENUS = "M_EDITOR"
+
+# constants END
+
+print( "Export To Unity" )
 
 class ExportToUnity( plugins.CommandData ):
     
@@ -35,7 +107,7 @@ class ExportToUnity( plugins.CommandData ):
             if len( enabledUnityTags ) > 0 and len( enabledStopTags ) > 0: 
                 
                 print( "There is a stop tag on an object with an export tag (" + object.GetName() + "). The stop tag will be ignored." )
-                print( k.PRINTED_NEWLINE )
+                print( PRINTED_NEWLINE )
     
             for tag in enabledUnityTags: 
     
@@ -45,40 +117,40 @@ class ExportToUnity( plugins.CommandData ):
                 
                 if tag[ c4d.EXPORTTOUNITY_PATH ] == "":
                     
-                    tag[ c4d.EXPORTTOUNITY_ERRORS ] = tag[ c4d.EXPORTTOUNITY_ERRORS ] + "Please specify an export path." + k.NEWLINE
+                    tag[ c4d.EXPORTTOUNITY_ERRORS ] = tag[ c4d.EXPORTTOUNITY_ERRORS ] + "Please specify an export path." + NEWLINE
                     thereWereErrors = True
     
                 else:
     
                     if not os.path.exists( tag[ c4d.EXPORTTOUNITY_PATH ] ):
-                        tag[ c4d.EXPORTTOUNITY_ERRORS ] = tag[ c4d.EXPORTTOUNITY_ERRORS ] + "Export path does not exist." + k.NEWLINE
+                        tag[ c4d.EXPORTTOUNITY_ERRORS ] = tag[ c4d.EXPORTTOUNITY_ERRORS ] + "Export path does not exist." + NEWLINE
                         thereWereErrors = True
     
                 finalPath = tag[ c4d.EXPORTTOUNITY_PATH ]
-                filetype = k.FILEEXTENSION_C4D
+                filetype = FILEEXTENSION_C4D
                 
-                if tag[ c4d.EXPORTTOUNITY_FILEFORMAT ] == c4d.EXPORTTOUNITY_FILEFORMAT_FBX: filetype = k.FILEEXTENSION_FBX
+                if tag[ c4d.EXPORTTOUNITY_FILEFORMAT ] == c4d.EXPORTTOUNITY_FILEFORMAT_FBX: filetype = FILEEXTENSION_FBX
             
                 filename = object.GetName()
                 
                 if tag[ c4d.EXPORTTOUNITY_FILENAME_OVERRIDE ]: filename = tag [ c4d.EXPORTTOUNITY_FILENAME_OVERRIDE ]
 
                 if "/" in filename:
-                    tag[ c4d.EXPORTTOUNITY_WARNINGS ] = tag[ c4d.EXPORTTOUNITY_WARNINGS ] + "Forward slashes not allowed in file names, replaced with “-”." + k.NEWLINE
+                    tag[ c4d.EXPORTTOUNITY_WARNINGS ] = tag[ c4d.EXPORTTOUNITY_WARNINGS ] + "Forward slashes not allowed in file names, replaced with “-”." + NEWLINE
                     filename = filename.replace( "/", "-" )
 
                 if ":" in filename:
-                    tag[ c4d.EXPORTTOUNITY_WARNINGS ] = tag[ c4d.EXPORTTOUNITY_WARNINGS ] + "Colons not allowed in file names, replaced with “-”." + k.NEWLINE
+                    tag[ c4d.EXPORTTOUNITY_WARNINGS ] = tag[ c4d.EXPORTTOUNITY_WARNINGS ] + "Colons not allowed in file names, replaced with “-”." + NEWLINE
                     filename = filename.replace( ":", "-" )
 
                 if "\\" in filename:
-                    tag[ c4d.EXPORTTOUNITY_WARNINGS ] = tag[ c4d.EXPORTTOUNITY_WARNINGS ] + "Back slashes not allowed in file names, replaced with “-”." + k.NEWLINE
+                    tag[ c4d.EXPORTTOUNITY_WARNINGS ] = tag[ c4d.EXPORTTOUNITY_WARNINGS ] + "Back slashes not allowed in file names, replaced with “-”." + NEWLINE
                     filename = filename.replace( "\\", "-" )
 
                 finalPath = os.path.join( finalPath, filename + "." + filetype )
 
                 if finalPath in paths:
-                    tag[ c4d.EXPORTTOUNITY_ERRORS ] = tag[ c4d.EXPORTTOUNITY_ERRORS ] + "The path " + finalPath + " is already being used by another export. This would result in an overwritten file." + k.NEWLINE
+                    tag[ c4d.EXPORTTOUNITY_ERRORS ] = tag[ c4d.EXPORTTOUNITY_ERRORS ] + "The path " + finalPath + " is already being used by another export. This would result in an overwritten file." + NEWLINE
                     thereWereErrors = True                    
                 else:
                     paths.append( finalPath )
@@ -91,7 +163,7 @@ class ExportToUnity( plugins.CommandData ):
      
     def PrintErrors( self, doc ):
         
-        c4d.CallCommand( k.COMMAND_SHOW_CONSOLE )
+        c4d.CallCommand( COMMAND_SHOW_CONSOLE )
         
         object = doc.GetFirstObject()
         
@@ -111,7 +183,7 @@ class ExportToUnity( plugins.CommandData ):
                     
                     print( data[ c4d.EXPORTTOUNITY_ERRORS ] )
                 
-                    print( k.PRINTED_NEWLINE )
+                    print( PRINTED_NEWLINE )
                 
             object = self.GetNextObject( object )    
     
@@ -150,7 +222,7 @@ class ExportToUnity( plugins.CommandData ):
     
         for tag in object.GetTags():
             
-            if tag.GetType() == k.MAIN_TAG_PLUGIN_ID:
+            if tag.GetType() == MAIN_TAG_PLUGIN_ID:
                 
                 return True
             
@@ -168,7 +240,7 @@ class ExportToUnity( plugins.CommandData ):
     
         for tag in object.GetTags():
             
-            if tag.GetType() == k.STOP_TAG_PLUGIN_ID:
+            if tag.GetType() == STOP_TAG_PLUGIN_ID:
                 
                 return True
             
@@ -188,7 +260,7 @@ class ExportToUnity( plugins.CommandData ):
     
         for tag in object.GetTags():
             
-            if tag.GetType() == k.MAIN_TAG_PLUGIN_ID:
+            if tag.GetType() == MAIN_TAG_PLUGIN_ID:
             
                 tags.append( tag )
                 
@@ -216,7 +288,7 @@ class ExportToUnity( plugins.CommandData ):
     
         for tag in object.GetTags():
             
-            if tag.GetType() == k.STOP_TAG_PLUGIN_ID:
+            if tag.GetType() == STOP_TAG_PLUGIN_ID:
             
                 tags.append( tag )
             
@@ -258,7 +330,7 @@ class ExportToUnity( plugins.CommandData ):
     
         for object in toDelete:
             doc.SetSelection( object, c4d.SELECTION_NEW )
-            c4d.CallCommand( k.COMMAND_DELETE )
+            c4d.CallCommand( COMMAND_DELETE )
              
     def Export( self, doc, object, tag ):
         
@@ -269,7 +341,7 @@ class ExportToUnity( plugins.CommandData ):
         if tag [ c4d.EXPORTTOUNITY_WARNINGS ]:
             
             print( tag[ c4d.EXPORTTOUNITY_WARNINGS ] )
-            print( k.PRINTED_NEWLINE )
+            print( PRINTED_NEWLINE )
         
         theNewDocument = c4d.documents.IsolateObjects( doc, [ object ] )
         theNewDocument.SetDocumentName( "temp-export-to-unity-" + str( self.TempDocumentNameCounter ) )
@@ -282,20 +354,20 @@ class ExportToUnity( plugins.CommandData ):
        
         if tag[ c4d.EXPORTTOUNITY_DO_CURRENT_STATE_TO_OBJECT ]:
             theNewDocument.SetActiveObject( theNewDocument.GetFirstObject() )
-            c4d.CallCommand( k.COMMAND_CURRENT_STATE_TO_OBJECT )      
-            c4d.CallCommand( k.COMMAND_DELETE )
+            c4d.CallCommand( COMMAND_CURRENT_STATE_TO_OBJECT )      
+            c4d.CallCommand( COMMAND_DELETE )
         
         if tag[ c4d.EXPORTTOUNITY_DO_CONNECT_AND_DELETE ]:
             theNewDocument.SetActiveObject( theNewDocument.GetFirstObject() )
-            c4d.CallCommand( k.COMMAND_SELECT_CHILDREN )
-            c4d.CallCommand( k.COMMAND_CONNECT_AND_DELETE )        
+            c4d.CallCommand( COMMAND_SELECT_CHILDREN )
+            c4d.CallCommand( COMMAND_CONNECT_AND_DELETE )        
         
         theFinalObject = theNewDocument.GetFirstObject()
         theFinalObject.SetName( objectName )
         
         if tag[  c4d.EXPORTTOUNITY_FILEFORMAT ] == c4d.EXPORTTOUNITY_FILEFORMAT_FBX:
         
-            saveOptions = k.C4D_OPTION_SAVE_AS_FBX
+            saveOptions = C4D_OPTION_SAVE_AS_FBX
             
             self.RestoreUsersFBXSettings()
             
@@ -328,17 +400,17 @@ class ExportToUnity( plugins.CommandData ):
 
         else:
             
-            saveOptions = k.C4D_OPTION_SAVE_AS_C4D
+            saveOptions = C4D_OPTION_SAVE_AS_C4D
         
-        c4d.documents.SaveDocument( theNewDocument, tag[ c4d.EXPORTTOUNITY_FINAL_PATH ], k.SAVE_DOCUMENT_FLAGS, saveOptions )
+        c4d.documents.SaveDocument( theNewDocument, tag[ c4d.EXPORTTOUNITY_FINAL_PATH ], SAVE_DOCUMENT_FLAGS, saveOptions )
         c4d.documents.KillDocument( theNewDocument )
     
     def Execute( self, doc ):
 
         preferences = GetPreferences()
         
-        if preferences.GetBool( k.PREF_DO_CLEAR_CONSOLE ): c4d.CallCommand( k.COMMAND_CLEAR_CONSOLE )
-        if preferences.GetBool( k.PREF_DO_C4D_SAVE_COMMAND ): c4d.CallCommand( k.COMMAND_SAVE )
+        if preferences.GetBool( PREF_DO_CLEAR_CONSOLE ): c4d.CallCommand( COMMAND_CLEAR_CONSOLE )
+        if preferences.GetBool( PREF_DO_C4D_SAVE_COMMAND ): c4d.CallCommand( COMMAND_SAVE )
 
         thereWereErrors = self.Preflight( doc )
 
@@ -367,7 +439,7 @@ class ToggleClearConsole( plugins.CommandData ):
     def Execute( self, doc ):
         
         preferences = GetPreferences()
-        preferences.SetBool( k.PREF_DO_CLEAR_CONSOLE, not preferences.GetBool( k.PREF_DO_CLEAR_CONSOLE ) )
+        preferences.SetBool( PREF_DO_CLEAR_CONSOLE, not preferences.GetBool( PREF_DO_CLEAR_CONSOLE ) )
         
         return True
     
@@ -375,7 +447,7 @@ class ToggleClearConsole( plugins.CommandData ):
         
         preferences = GetPreferences()
         
-        if preferences.GetBool( k.PREF_DO_CLEAR_CONSOLE ):
+        if preferences.GetBool( PREF_DO_CLEAR_CONSOLE ):
             return c4d.CMD_ENABLED | c4d.CMD_VALUE
         else:
             return c4d.CMD_ENABLED
@@ -385,7 +457,7 @@ class ToggleDoSave( plugins.CommandData ):
     def Execute( self, doc ):
         
         preferences = GetPreferences()
-        preferences.SetBool( k.PREF_DO_C4D_SAVE_COMMAND, not preferences.GetBool( k.PREF_DO_C4D_SAVE_COMMAND ) )
+        preferences.SetBool( PREF_DO_C4D_SAVE_COMMAND, not preferences.GetBool( PREF_DO_C4D_SAVE_COMMAND ) )
         
         return True
     
@@ -393,7 +465,7 @@ class ToggleDoSave( plugins.CommandData ):
         
         preferences = GetPreferences()
         
-        if preferences.GetBool( k.PREF_DO_C4D_SAVE_COMMAND ):
+        if preferences.GetBool( PREF_DO_C4D_SAVE_COMMAND ):
             return c4d.CMD_ENABLED | c4d.CMD_VALUE
         else:
             return c4d.CMD_ENABLED
@@ -403,8 +475,8 @@ class Tag( plugins.TagData ):
     def Init( self, tag ):
         
         preferences = GetPreferences()
-        tag[ c4d.EXPORTTOUNITY_PATH ] = preferences.GetString( k.PREF_LAST_PATH )
-        tag[ c4d.EXPORTTOUNITY_FILEFORMAT ] = k.TAG_DEFAULT_FILEFORMAT
+        tag[ c4d.EXPORTTOUNITY_PATH ] = preferences.GetString( PREF_LAST_PATH )
+        tag[ c4d.EXPORTTOUNITY_FILEFORMAT ] = TAG_DEFAULT_FILEFORMAT
 
         return True
 
@@ -444,7 +516,7 @@ class Tag( plugins.TagData ):
             
             nodeData = node.GetDataInstance()            
             preferences = GetPreferences()
-            preferences.SetString( k.PREF_LAST_PATH, nodeData[ c4d.EXPORTTOUNITY_PATH ] )
+            preferences.SetString( PREF_LAST_PATH, nodeData[ c4d.EXPORTTOUNITY_PATH ] )
         
         if type == c4d.MSG_DESCRIPTION_COMMAND:
             
@@ -487,19 +559,19 @@ class StopTag( plugins.TagData ):
 
 def GetPreferences():
     
-    preferences = c4d.plugins.GetWorldPluginData( k.MAIN_COMMAND_PLUGIN_ID )
+    preferences = c4d.plugins.GetWorldPluginData( MAIN_COMMAND_PLUGIN_ID )
     
     if preferences == None:
 
         preferences = c4d.BaseContainer()
 
-        result = c4d.plugins.SetWorldPluginData( k.MAIN_COMMAND_PLUGIN_ID, preferences )    
+        result = c4d.plugins.SetWorldPluginData( MAIN_COMMAND_PLUGIN_ID, preferences )    
 
-    if preferences.GetBool( k.PREF_DO_C4D_SAVE_COMMAND ) == None: preferences.SetBool( k.PREF_DO_C4D_SAVE_COMMAND, False )
+    if preferences.GetBool( PREF_DO_C4D_SAVE_COMMAND ) == None: preferences.SetBool( PREF_DO_C4D_SAVE_COMMAND, False )
         
-    if preferences.GetBool( k.PREF_DO_CLEAR_CONSOLE ) == None: preferences.SetBool( k.PREF_DO_CLEAR_CONSOLE, True )   
+    if preferences.GetBool( PREF_DO_CLEAR_CONSOLE ) == None: preferences.SetBool( PREF_DO_CLEAR_CONSOLE, True )   
     
-    if preferences.GetString( k.PREF_LAST_PATH ) == None: preferences.SetString( k.PREF_LAST_PATH, "" )
+    if preferences.GetString( PREF_LAST_PATH ) == None: preferences.SetString( PREF_LAST_PATH, "" )
 
     return preferences
 
@@ -507,16 +579,16 @@ def PluginMessage( id, data ):
     
     if id == c4d.C4DPL_BUILDMENU:
         
-        mainMenu = gui.GetMenuResource( k.NAME_OF_EDITOR_MENUS ) 
+        mainMenu = gui.GetMenuResource( NAME_OF_EDITOR_MENUS ) 
         pluginsMenu = gui.SearchPluginMenuResource()
 
         menu = c4d.BaseContainer()
-        menu.InsData( c4d.MENURESOURCE_SUBTITLE, k.MAIN_MENU_TITLE )  
-        menu.InsData( c4d.MENURESOURCE_COMMAND, k.MAIN_PLUGIN_COMMAND )
+        menu.InsData( c4d.MENURESOURCE_SUBTITLE, MAIN_MENU_TITLE )  
+        menu.InsData( c4d.MENURESOURCE_COMMAND, MAIN_PLUGIN_COMMAND )
         menu.InsData( c4d.MENURESOURCE_SEPERATOR, True )
         
-        menu.InsData( c4d.MENURESOURCE_COMMAND, k.TOGGLE_CLEAR_CONSOLE_COMMAND )
-        menu.InsData( c4d.MENURESOURCE_COMMAND, k.TOGGLE_DO_SAVE_COMMAND )
+        menu.InsData( c4d.MENURESOURCE_COMMAND, TOGGLE_CLEAR_CONSOLE_COMMAND )
+        menu.InsData( c4d.MENURESOURCE_COMMAND, TOGGLE_DO_SAVE_COMMAND )
        
         if pluginsMenu:
             mainMenu.InsDataAfter( c4d.MENURESOURCE_STRING, menu, pluginsMenu )
@@ -527,7 +599,7 @@ def GetFBXExporter():
     
     fbxExporter = None
     
-    plugin = plugins.FindPlugin( k.FBX_EXPORTER_ID, c4d.PLUGINTYPE_SCENESAVER )
+    plugin = plugins.FindPlugin( FBX_EXPORTER_ID, c4d.PLUGINTYPE_SCENESAVER )
 
     op = {}
     
@@ -545,50 +617,50 @@ if __name__ == "__main__":
 
     theBitmap.InitWith( os.path.join( theDirectoryPath, "res", "icon.tif" ) )
 
-    if c4d.GetC4DVersion() >= k.MINIMUM_C4D_VERSION_REQUIRED_FOR_FBX_OVERRIDE:
+    if c4d.GetC4DVersion() >= MINIMUM_C4D_VERSION_REQUIRED_FOR_FBX_OVERRIDE:
 
-        plugins.RegisterTagPlugin( id = k.MAIN_TAG_PLUGIN_ID, 
-                                   str = k.MAIN_TAG_TAGNAME, 
-                                   description = k.MAIN_TAG_DESCRIPTION, 
+        plugins.RegisterTagPlugin( id = MAIN_TAG_PLUGIN_ID, 
+                                   str = MAIN_TAG_TAGNAME, 
+                                   description = MAIN_TAG_DESCRIPTION, 
                                    g = Tag, 
                                    icon = theBitmap, 
                                    info = c4d.TAG_MULTIPLE | c4d.TAG_VISIBLE )
 
     else:
         
-        plugins.RegisterTagPlugin( id = k.MAIN_TAG_PLUGIN_ID, 
-                                       str = k.MAIN_TAG_TAGNAME, 
-                                       description = k.MAIN_TAG_DESCRIPTION_NO_FBX, 
+        plugins.RegisterTagPlugin( id = MAIN_TAG_PLUGIN_ID, 
+                                       str = MAIN_TAG_TAGNAME, 
+                                       description = MAIN_TAG_DESCRIPTION_NO_FBX, 
                                        g = Tag, 
                                        icon = theBitmap, 
                                        info = c4d.TAG_MULTIPLE | c4d.TAG_VISIBLE )        
 
-    plugins.RegisterCommandPlugin( id = k.MAIN_COMMAND_PLUGIN_ID, 
-                                   str = k.MAIN_COMMAND_NAME, 
+    plugins.RegisterCommandPlugin( id = MAIN_COMMAND_PLUGIN_ID, 
+                                   str = MAIN_COMMAND_NAME, 
                                    info = c4d.PLUGINFLAG_HIDEPLUGINMENU, 
                                    icon = theBitmap, 
-                                   help = k.MAIN_COMMAND_HELP, 
+                                   help = MAIN_COMMAND_HELP, 
                                    dat = ExportToUnity() )
 
     theBitmap.InitWith( os.path.join( theDirectoryPath, "res", "icon_stop_tag.tif" ) )
     
-    plugins.RegisterTagPlugin( id = k.STOP_TAG_PLUGIN_ID, 
-                               str = k.STOP_TAG_TAGNAME, 
-                               description = k.STOP_TAG_DESCRIPTION, 
+    plugins.RegisterTagPlugin( id = STOP_TAG_PLUGIN_ID, 
+                               str = STOP_TAG_TAGNAME, 
+                               description = STOP_TAG_DESCRIPTION, 
                                g = StopTag, 
                                icon = theBitmap, 
                                info = c4d.TAG_VISIBLE )    
     
-    plugins.RegisterCommandPlugin( id = k.TOGGLE_CLEAR_CONSOLE_COMMAND_PLUGIN_ID, 
-                                   str = k.TOGGLE_CLEAR_CONSOLE_COMMAND_NAME, 
+    plugins.RegisterCommandPlugin( id = TOGGLE_CLEAR_CONSOLE_COMMAND_PLUGIN_ID, 
+                                   str = TOGGLE_CLEAR_CONSOLE_COMMAND_NAME, 
                                    info = c4d.PLUGINFLAG_HIDEPLUGINMENU, 
                                    icon = None, 
-                                   help = k.TOGGLE_CLEAR_CONSOLE_COMMAND_HELP, 
+                                   help = TOGGLE_CLEAR_CONSOLE_COMMAND_HELP, 
                                    dat = ToggleClearConsole() )
     
-    plugins.RegisterCommandPlugin( id = k.TOGGLE_DO_SAVE_COMMAND_PLUGIN_ID, 
-                                   str = k.TOGGLE_DO_SAVE_COMMAND_NAME, 
+    plugins.RegisterCommandPlugin( id = TOGGLE_DO_SAVE_COMMAND_PLUGIN_ID, 
+                                   str = TOGGLE_DO_SAVE_COMMAND_NAME, 
                                    info = c4d.PLUGINFLAG_HIDEPLUGINMENU, 
                                    icon = None, 
-                                   help = k.TOGGLE_DO_SAVE_COMMAND_HELP, 
+                                   help = TOGGLE_DO_SAVE_COMMAND_HELP, 
                                    dat = ToggleDoSave() )
